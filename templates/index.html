@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelCraft | Image Processing Suite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen font-sans">
+
+    <header class="border-b border-gray-800 p-6 bg-gray-900 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+                PixelCraft Studio
+            </h1>
+            <span class="text-xs text-gray-500 font-mono">Image Processing | CSCI208</span>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-4 gap-8">
+        
+        <aside class="lg:col-span-1 space-y-6">
+            <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700">
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-4">Operations</h2>
+                
+                <div class="space-y-3">
+                    <div class="group">
+                        <p class="text-xs text-blue-400 mb-2 font-bold uppercase">Point Processing</p>
+                        <button onclick="applyFilter('negative')" class="w-full text-left p-3 rounded-lg bg-gray-700 hover:bg-blue-600 transition-all text-sm mb-2">Negative</button>
+                        <button onclick="applyFilter('gamma')" class="w-full text-left p-3 rounded-lg bg-gray-700 hover:bg-blue-600 transition-all text-sm mb-2">Gamma Correction</button>
+                        <button onclick="applyFilter('log')" class="w-full text-left p-3 rounded-lg bg-gray-700 hover:bg-blue-600 transition-all text-sm">Log Transform</button>
+                    </div>
+
+                    <div class="pt-4">
+                        <p class="text-xs text-emerald-400 mb-2 font-bold uppercase">Spatial Filters</p>
+                        <button onclick="applyFilter('blur')" class="w-full text-left p-3 rounded-lg bg-gray-700 hover:bg-emerald-600 transition-all text-sm mb-2">Smoothing (Mean)</button>
+                        <button onclick="applyFilter('median')" class="w-full text-left p-3 rounded-lg bg-gray-700 hover:bg-emerald-600 transition-all text-sm">Median Filter</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700">
+                <h2 class="text-sm font-semibold text-gray-400 mb-2 italic">Performance Metrics</h2>
+                <div class="text-xs font-mono space-y-1">
+                    <p>Complexity: <span id="complexity" class="text-yellow-500">O(N*M)</span></p>
+                    <p>Execution Time: <span id="time" class="text-emerald-400">0.00s</span></p>
+                </div>
+            </div>
+        </aside>
+
+        <section class="lg:col-span-3 space-y-6">
+            <div id="dropzone" class="border-2 border-dashed border-gray-700 rounded-3xl p-10 flex flex-col items-center justify-center bg-gray-800/50 hover:border-blue-500 transition-colors cursor-pointer">
+                <input type="file" id="imageInput" class="hidden" accept="image/*">
+                <p class="text-gray-400">Drag & drop or <span class="text-blue-400 underline">browse</span> for medical/astronomy images</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <p class="text-center text-xs text-gray-500 uppercase">Original</p>
+                    <div class="bg-black rounded-xl aspect-square overflow-hidden flex items-center justify-center">
+                        <img id="originalImg" class="max-h-full" src="">
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-center text-xs text-gray-500 uppercase">Processed Result</p>
+                    <div class="bg-black rounded-xl aspect-square overflow-hidden flex items-center justify-center">
+                        <img id="processedImg" class="max-h-full" src="">
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const dropzone = document.getElementById('dropzone');
+
+        dropzone.onclick = () => imageInput.click();
+
+        imageInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    document.getElementById('originalImg').src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        async function applyFilter(filterType) {
+            const file = imageInput.files[0];
+            if (!file) return alert("Please upload an image first!");
+
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('filter', filterType);
+
+            document.getElementById('time').innerText = "Processing...";
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/process', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                document.getElementById('processedImg').src = data.image;
+                document.getElementById('time').innerText = data.execution_time + "s";
+                document.getElementById('complexity').innerText = data.complexity;
+                
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Make sure Flask server is running!");
+            }
+        }
+    </script>
+</body>
+</html>
