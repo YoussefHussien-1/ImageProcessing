@@ -3,6 +3,7 @@ from PIL import Image
 import algorithm
 import io
 import base64
+import time
 
 
 app = Flask(__name__)
@@ -23,7 +24,7 @@ def processing():
 
     matrix = [img_data[i * width : (i+1) * width] for i in range(height)]
     gamma = 2.0
-
+    start_time = time.time()
     if filter_type == 'log':
         processed_matrix = algorithm.apply_log(matrix)
 
@@ -40,14 +41,16 @@ def processing():
 
     elif filter_type == 'median':
         processed_matrix = algorithm.apply_median(matrix)
-
-
+    elif filter_type == 'edge':
+        processed_matrix = algorithm.apply_edge_detection(matrix)
+    
     else:
         return jsonify({
             "success": True,
             "message": f"Applied {filter_type} filter successfully!"
         })
-    
+    end_time = time.time()
+    exec_time =round(end_time - start_time, 4)
 
     flat_processed_data = [pixel for row in processed_matrix for pixel in row]
 
@@ -65,7 +68,9 @@ def processing():
     return jsonify({
         "success": True,
         "message": f"Applied {filter_type} filter successfully!",
-        "image": img_url
+        "image": img_url,
+        "execution_time": exec_time,
+        "complexity": "Time: O(N*M) | Space: O(N*M)"
     })
     
 

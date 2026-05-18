@@ -95,3 +95,33 @@ def apply_median(matrix):
             new_matrix[i][j] = median_value
             
     return new_matrix
+def apply_edge_detection(matrix):
+    height = len(matrix)
+    width = len(matrix[0])
+    
+    new_matrix = [row[:] for row in matrix]
+
+    kernel = [
+        [-1, -1, -1],
+        [-1,  8, -1],
+        [-1, -1, -1]
+    ]
+
+    for i in range(1, height - 1):
+        for j in range(1, width - 1):
+            
+            total_sum = 0
+            for ki in [-1, 0, 1]:
+                for kj in [-1, 0, 1]:
+                    pixel_value = matrix[i + ki][j + kj]
+                    kernel_value = kernel[ki + 1][kj + 1] 
+                    total_sum += pixel_value * kernel_value
+            
+            if total_sum < 0:
+                total_sum = 0
+            elif total_sum > 255:
+                total_sum = 255
+                
+            new_matrix[i][j] = int(total_sum)
+            
+    return new_matrix    
